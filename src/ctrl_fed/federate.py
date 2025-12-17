@@ -110,7 +110,9 @@ def run_ctrl_federate(config_path: str) -> None:
 
         step_count += 1
 
+    # 给 HELICS 一个 flush 的机会，再断开
+    h.helicsFederateRequestTime(fed, h.HELICS_TIME_MAXTIME)
+    h.helicsFederateDisconnect(fed)
     print("[ctrl_fed] finished")
 
-    h.helicsFederateDisconnect(fed)
     h.helicsFederateFree(fed)
