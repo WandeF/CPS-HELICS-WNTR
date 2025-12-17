@@ -1,0 +1,89 @@
+sim:
+  name: minitown
+  inp_path: data/minitown.inp
+  dt_phys_s: 900
+  t_end_s: 86400
+  seed: 0
+
+topics:
+  sensor_prefix: phys/sensors/
+  command_prefix: ctrl/commands/
+
+# ========== Sensors ==========
+sensors:
+  tank_level:
+    - id: TANK
+      tank: TANK
+      plc_id: plc_TANK
+      topic: phys/sensors/TANK  # 显式写出，便于搜索/重构
+
+# ========== Actuators ==========
+actuators:
+  pumps:
+    - id: PUMP1
+      pump: PUMP1
+      plc_id: plc_PUMP1
+      topic: ctrl/commands/PUMP1
+    - id: PUMP2
+      pump: PUMP2
+      plc_id: plc_PUMP2
+      topic: ctrl/commands/PUMP2
+
+# ========== PLCs ==========
+plcs:
+  - id: plc_TANK
+    type: sensor_plc
+    publishes:
+      - topic: phys/sensors/TANK
+        schema:
+          tank_level:
+            tank: TANK
+
+  - id: plc_PUMP1
+    type: actuator_plc
+    subscribes:
+      - topic: phys/sensors/TANK
+        as: tank_level
+    publishes:
+      - topic: ctrl/commands/PUMP1
+        schema:
+          pump_cmd:
+            pump: PUMP1
+            cmd: "OPEN|CLOSED"
+    logic:
+      kind: hysteresis_threshold
+      input: tank_level
+      below: 4.0
+      above: 6.3
+      initial: CLOSED     # ✅ 新增：滞回逻辑初始状态
+      output:
+        open_value: OPEN
+        closed_value: CLOSED
+
+  - id: plc_PUMP2
+    type: actuator_plc
+    subscribes:
+      - topic: phys/sensors/TANK
+        as: tank_level
+    publishes:
+      - topic: ctrl/commands/PUMP2
+        schema:
+          pump_cmd:
+            pump: PUMP2
+            cmd: "OPEN|CLOSED"
+    logic:
+      kind: hysteresis_threshold
+      input: tank_level
+      below: 1.0
+      above: 4.5
+      initial: CLOSED     # ✅ 新增：滞回逻辑初始状态
+      output:
+        open_value: OPEN
+        closed_value: CLOSED
+
+# ========== HELICS ==========
+helics:
+  core_type: zmq
+  broker:
+    port: 23404
+    federates: 2

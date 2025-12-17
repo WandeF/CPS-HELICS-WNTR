@@ -1,0 +1,17 @@
+{
+  "name": "cps_helics_wntr_runner",
+  "broker": true,
+  "coreType": "zmq",
+  "federates": [
+    {
+      "name": "phys_fed",
+      "directory": ".",
+      "exec": "python scripts/run_phys.py --config config/minitown.yaml"
+    },
+    {
+      "name": "ctrl_fed",
+      "directory": ".",
+      "exec": "python scripts/run_ctrl.py --config config/minitown.yaml"
+    }
+  ]
+}
